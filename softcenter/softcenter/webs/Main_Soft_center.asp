@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
@@ -25,17 +25,17 @@
 <style>
 .cloud_main_radius_left{
     -webkit-border-radius: 10px 0 0 10px;
-    -moz-border-radius: 10px 0 0 10px;  
+    -moz-border-radius: 10px 0 0 10px;
     border-radius: 10px 0 0 10px;
 }
 .cloud_main_radius_right{
     -webkit-border-radius: 0 10px 10px 0;
-    -moz-border-radius: 0 10px 10px 0;  
+    -moz-border-radius: 0 10px 10px 0;
     border-radius: 0 10px 10px 0;
 }
 .cloud_main_radius{
     -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;   
+    -moz-border-radius: 10px;
     border-radius: 10px;
 }
 </style>
@@ -48,7 +48,7 @@
     input[type=button]:focus {
         outline: none;
     }
-    .icon{
+   .icon{
         float:left;
         position:relative;
         margin: 10px 0px 30px 0px;
@@ -64,19 +64,20 @@
         border:0;
         width: 60px;
         height: 60px;
-        margin:4px;
+        margin:2px;
     }
     .icon-desc{
         position: absolute;
         left: 0;
         top: 0;
+        height: 105%;
+        visibility: hidden;
         font-size:0;
         width: 119px;
         border-radius: 8px;
         font-size: 16px;
         opacity: 0;
         background-color:#000;
-        line-height: 84px;
         margin:5px;
         text-overflow:ellipsis;
         transition: opacity .5s ease-in;
@@ -84,26 +85,45 @@
     .icon-desc .text{
         font-size: 12px;
         line-height: 1.4em;
-        vertical-align:middle;
-        display: inline-block;
-        margin: 10px;
+        display: block;
+        height: 100%;
+        padding: 10px;
+        box-sizing: border-box;
     }
     .icon:hover .icon-desc{
         opacity: .8;
+        visibility: visible;
     }
     .icon-desc .opt{
-        font-size: 0;
-        line-height: 0;
+        position: absolute;
+        bottom: 0;
+        height: 18px;
+        width: 100%;
+    }
+    .install-status-0 .icon-desc .opt{
+        height: 100%;
     }
     .icon-desc .install-btn,
     .icon-desc .uninstall-btn,
     .icon-desc .update-btn{
-        display: inline-block;
-        border: none;
+    	background: #fff;
+    	color:#333;
+    	cursor:pointer;
+    	text-align: center;
+    	font-size: 13px;
+    	padding-bottom: 5px;
+    	margin-left: 10px;
+    	margin-right: 10px;
+        display: block;
         width: 100%;
-        margin-top: 20px;
+        height: 18px;
         border-radius: 0px 0px 5px 5px;
+        border: 0px;
+        position: absolute;
+        bottom: 0;
+        left: -10px;
     }
+
     .icon-desc .uninstall-btn{
         display: none;
     }
@@ -125,24 +145,39 @@
         background: #444f53;
     }
     .install-status-1 .uninstall-btn{
-        display: inline-block;
+        display: block;
     }
     .install-status-1 .install-btn{
+        display: none;
+    }
+    .update-btn{
         display: none;
     }
     .install-status-1 .update-btn{
         display: none;
     }
+    .install-status-4 .uninstall-btn{
+        display: block;
+    }
+    .install-status-4 .install-btn{
+        display: none;
+    }
+    .install-status-4 .update-btn{
+        display: none;
+    }
     .install-status-2 .uninstall-btn{
-        display: inline-block;
+        display: block;
         width: 40%;
         border-radius: 0px 0px 5px 0px;
+        right: -10px;
+        left: auto;
+        border-left: 1px solid #000;
     }
     .install-status-2 .install-btn{
         display: none;
     }
     .install-status-2 .update-btn{
-        display: inline-block;
+        display: block;
     }
     .install-status-1{
         display: none;
@@ -153,6 +188,9 @@
     .install-status-0{
         display: block;
     }
+    .install-status-4{
+        display: none;
+    }
     .install-view .install-status-1{
         display: block;
     }
@@ -162,8 +200,16 @@
     .install-view .install-status-0{
         display: none;
     }
+    .install-view .install-status-4{
+        display: block;
+    } 
+    .cloud_main_radius h2 { border-bottom:1px #AAA dashed;}
+	.cloud_main_radius h3,
+	.cloud_main_radius h4 { font-size:12px;color:#FC0;font-weight:normal;font-style: normal;}
+	.cloud_main_radius h5 { color:#FFF;font-weight:normal;font-style: normal;}
 </style>
 <script>
+//set tabstop=4 set shiftwidth=4 set expandtab
 String.prototype.format = String.prototype.f = function() {
     var s = this,
     i = arguments.length;
@@ -188,38 +234,11 @@ String.prototype.startsWith = function(prefix) {
 String.prototype.capitalizeFirstLetter = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
-var softcenter_modules = {};
-function parse_softcenter() {
-    var sm = "softcenter_module_";
-    for(o in db_softcenter_) {
-        if(o.indexOf(sm) != -1) {
-            var pos = o.indexOf("_", sm.length);
-            if(pos == -1) {
-             continue;
-            }
-            var name = o.substring(sm.length, pos);
-            //console.log(name);
-            var ob = null;
-            if (typeof(softcenter_modules[name]) != "undefined") {
-                ob = softcenter_modules[name];
-            } else {
-                ob = {};
-                softcenter_modules[name] = ob;
-            }
-            var name_op = o.substring(pos+1);
-            //console.log("name_op:"+name_op);
-            if(name_op.length == 0) {
-                 continue;
-            }
-            ob[name_op]=db_softcenter_[o];
-        }
-    }
-}
 function checkField(o, f, d) {
     if(typeof o[f] == "undefined") {
         o[f] = d;
     }
- 
+
     return o[f];
 }
 function appPostScript(moduleInfo, script) {
@@ -234,16 +253,15 @@ function appPostScript(moduleInfo, script) {
 
     //currState.name = moduleInfo.name;
     //TODO auto choose for home_url
-    data["softcenter_home_url"] = "http://koolshare.ngrok.wang:5000";
-
+    data["softcenter_home_url"] = "https://koolshare.ngrok.wang";
     data["softcenter_installing_todo"] = moduleInfo.name;
-    if(script == "app_intsall.sh") {
-	data["softcenter_installing_tar_url"] = moduleInfo.tar_url;
-	data["softcenter_installing_md5"] = moduleInfo.md5;
-	data["softcenter_installing_version"] = moduleInfo.version;
+    if(script == "ks_app_install.sh") {
+    data["softcenter_installing_tar_url"] = moduleInfo.tar_url;
+    data["softcenter_installing_md5"] = moduleInfo.md5;
+    data["softcenter_installing_version"] = moduleInfo.version;
 
-	//Update title for this module
-	data[moduleInfo.name + "_title"] = moduleInfo.title;
+    //Update title for this module
+    data[moduleInfo.name + "_title"] = moduleInfo.title;
         applyUrl = applyUrl + "," + moduleInfo.name;
     }
 
@@ -254,41 +272,46 @@ function appPostScript(moduleInfo, script) {
                 data: data,
                 success: function() {
                     var d = new Date();
-            //持续更新 10s
-            currState.lastChangeTick = d/1000 + TIMEOUT_SECONDS;
-            currState.installing = true;
-            showInstallStatus(true);
+                    //持续更新
+                    currState.lastChangeTick = d/1000 + TIMEOUT_SECONDS;
+                    currState.installing = true;
+                    showInstallStatus(true);
                 },
                 error: function() {
-            currState.installing = false;
+                    currState.installing = false;
                     console.log("install error");
                 }
         });
 }
 function appInstallModule(moduleInfo) {
-    appPostScript(moduleInfo, "app_install.sh");
+    appPostScript(moduleInfo, "ks_app_install.sh");
 }
 function appUninstallModule(moduleInfo) {
-    appPostScript(moduleInfo, "app_remove.sh");
+
+    if (!window.confirm('确定卸载吗')) {
+        return;
+    }
+    appPostScript(moduleInfo, "ks_app_remove.sh");
 }
 </script>
 <script>
     //TODO auto detect home url
-    db_softcenter_["softcenter_home_url"] = "http://koolshare.ngrok.wang:5000";
-    // 安装信息更新策略: 
+    db_softcenter_["softcenter_home_url"] = "https://koolshare.ngrok.wang";
+    
+    // 安装信息更新策略:
     // 当软件安装的时候,安装进程内部会有超时时间. 超过超时时间 没安装成功,则认为失败.
     // 但是路由内部的绝对时间与浏览器上的时间可能不同步,所以无法使用路由器内的时间. 浏览器的策略是,
     // 安装的时候会有一个同样的计时,若这个超时时间内,安装状态有变化,则更新安装状态.从而可以实时更新安装进程.
     var currState = {"installing": false, "lastChangeTick": 0, "lastStatus": "-1", "module":""};
-    var TIMEOUT_SECONDS = 10;
+    var TIMEOUT_SECONDS = 18;
     // TODO 如何避免实用全局变量?
     var softInfo = null;
     function initInstallStatus() {
     var o = db_softcenter_;
     var base = "softcenter_installing_";
     if(o[base+"status"]) {
-        //状态不是0, 并且不是1,则当前正处于安装状态,实时更新安装信息
-        if((o[base+"status"] != "0") && (o[base+"status"] != "1")) {
+        //状态不是0/1/7,则当前正处于安装状态,实时更新安装信息
+        if((o[base+"status"] != "0") && (o[base+"status"] != "1") && (o[base+"status"] != "7")) {
             var d = new Date();
             currState.lastChangeTick = d/1000 + TIMEOUT_SECONDS;
             currState.lastStatus = o[base+"status"];
@@ -305,41 +328,43 @@ function appUninstallModule(moduleInfo) {
         dataType: "script",
         success: function(xhr) {
             var o = db_softcenter_installing_;
-        var base = "softcenter_installing_";
+            var base = "softcenter_installing_";
+            console.log("status: " + o[base+"status"]);
             if(isInit) {
                 currState.lastStatus = o[base+"status"];
-        }
+            }
             var d = new Date();
             var curr = d.getTime()/1000;
             curr_module = checkField(o, "softcenter_installing_module", "");
             if(o[base+"status"] != currState.lastStatus) {
-        currState.lastStatus = o[base+"status"];
-        showInstallInfo(curr_module, currState.lastStatus);
-        
-        // Install ok now
-        if(currState.lastStatus == "1") {
-            currState.installing = false;
-            setTimeout("window.location.reload()", 1000);
-            return;
-        } else if(currState.lastStatus == "0") {
-            currState.installing = false;
-        }
+                currState.lastStatus = o[base+"status"];
+                showInstallInfo(curr_module, currState.lastStatus);
+
+                // Install ok now
+                if(currState.lastStatus == "1" || currState.lastStatus == "7") {
+                    currState.installing = false;
+                    setTimeout("window.location.reload()", 1000);
+                    return;
+                } else if(currState.lastStatus == "0") {
+                    currState.installing = false;
+                }
             }
-        if(currState.lastChangeTick > curr) {
-        setTimeout("showInstallStatus()", 1500);
-        } else {
-        currState.installing = false;
-        showInstallInfo("", currState.lastStatus);
-        }
+            if(currState.lastChangeTick > curr) {
+                    setTimeout("showInstallStatus()", 1500);
+            } else {
+                    currState.installing = false;
+                    $("#appInstallInfo").html("等待超时,可尝试手动刷新");
+                    //showInstallInfo("", currState.lastStatus);
+            }
            }
         })
     }
-    
+
     function showInstallInfo(module, scode) {
         var code = parseInt(scode);
         var s = module.capitalizeFirstLetter();
         var infos = [
-            "尚未安装",
+            "操作失败",
             "已安装",
             "将被安装到jffs分区...",
             "正在下载中...请耐心等待...",
@@ -356,6 +381,7 @@ function appUninstallModule(moduleInfo) {
             "正在检查是否有更新~",
             "检测更新错误！"
         ];
+        document.getElementById("install_status").style.display = "";
         $("#appInstallInfo").html(s + infos[code]);
     }
     //切换安装未安装面板
@@ -371,14 +397,16 @@ function appUninstallModule(moduleInfo) {
     function renderView(apps) {
         // set apps to global variable of softInfo
         softInfo = apps;
+        //console.log(softInfo);
+
         //简单模板函数
         function _format(source, opts) {
             var source = source.valueOf(),
                 data = Array.prototype.slice.call(arguments, 1),
                 toString = Object.prototype.toString;
             if(data.length){
-                data = data.length == 1 ? 
-                    (opts !== null && (/\[object Array\]|\[object Object\]/.test(toString.call(opts))) ? opts : data) 
+                data = data.length == 1 ?
+                    (opts !== null && (/\[object Array\]|\[object Object\]/.test(toString.call(opts))) ? opts : data)
                     : data;
                 return source.replace(/#\{(.+?)\}/g, function (match, key){
                     var replacer = data[key];
@@ -397,16 +425,17 @@ function appUninstallModule(moduleInfo) {
                 '<dd class="icon-pic">',
                     //当图标娶不到的时候，使用默认图标，如果已经是默认图标且娶不到，就狗带了，不管
                     '<img src="#{icon}" onerror="this.src.indexOf(\'icon-default.png\')===-1 && (this.src=\'/res/icon-default.png\');" alt="图标出走了～"/>',
+                    '<img class="update-btn" style="position: absolute;width:20px;height:20px;margin-top:-66px;margin-left:44px;" src="/res/upgrade.png"',
                 '</dd>',
                 '<dt class="icon-title">#{title}</dt>',
                 '<dd class="icon-desc">',
-                    '<div class="text">',
-                        '<a href="/#{home_url}">#{description}</a>',
-                    '</div>',
+                    '<a class="text" href="/#{home_url}">',
+                        '#{description}',
+                    '</a>',
                     '<div class="opt">',
-                        '<button type="button" class="install-btn" data-name="#{name}">安装</button>',
-                        '<button type="button" class="update-btn" data-name="#{name}">更新</button>',
-                        '<button type="button" class="uninstall-btn" data-name="#{name}">卸载</button>',
+                        '<a type="button" class="install-btn" data-name="#{name}">安装</a>',
+                        '<a type="button" class="update-btn" data-name="#{name}">更新</a>',
+                        '<a type="button" class="uninstall-btn" data-name="#{name}">卸载</a>',
                     '</div>',
                 '</dd>',
             '</dl>'
@@ -432,6 +461,24 @@ function appUninstallModule(moduleInfo) {
             timeout: 1 * 1000
         });
     }
+
+function softceterInitData(data) {
+    var remoteData = data;
+    $("#spnOnlineVersion").html(remoteData.version);
+    if(remoteData.version != db_softcenter_["softcenter_version"]) {
+     $("#updateBtn").show();
+     $("#updateBtn").click(function () {
+          var moduleInfo = {
+        "name":"softcenter",
+        "md5": remoteData.md5,
+        "tar_url": remoteData.tar_url,
+        "version": remoteData.version
+        };
+          appPostScript(moduleInfo, "ks_app_install.sh");
+     });
+    }
+}
+
     function init(cb) {
         //设置默认值
         function _setDefault(source, defaults) {
@@ -458,6 +505,7 @@ function appUninstallModule(moduleInfo) {
                     }
                 }
             });
+
             return result;
         }
         //将本地和远程进行一次对比合并
@@ -467,10 +515,11 @@ function appUninstallModule(moduleInfo) {
             $.each(remoteData, function (i, app) {
                 var name = app.name;
                 var oldApp = localData[name] || {};
-                var install = (parseInt(oldApp.install, 10) === 1 && app.version !== oldApp.version) ? 2 : oldApp.install || "0"; 
+                var install = (parseInt(oldApp.install, 10) === 1 && app.version !== oldApp.version) ? 2 : oldApp.install || "0";
                 result[name] = $.extend(oldApp, app);
                 result[name].install = install;
             });
+            
             $.map(localData, function (app, name) {
                 if (!result[name]) {
                     result[name] = app;
@@ -487,13 +536,13 @@ function appUninstallModule(moduleInfo) {
                     new_version: false
                 });
 
-                // icon 规则: 
+                // icon 规则:
                 // 如果已安装的插件,那图标必定在 /koolshare/res 目录, 通过 /res/icon-{name}.png 请求路径得到图标
-                // 如果是未安装的插件,则必定在 http://koolshare.ngrok.wang:5000/{name}/{name}/icon-{name}.png
+                // 如果是未安装的插件,则必定在 https://koolshare.ngrok.wang/{name}/{name}/icon-{name}.png
                 // TODO 如果因为一些错误导致没有图标, 有可能显示一张默认图标吗?
                 item.icon = parseInt(item.install, 10) !== 0
                     ? ('/res/icon-' + item.name + '.png')
-                    : ('http://koolshare.ngrok.wang:5000' + new Array(3).join('/softcenter') + '/res/icon-' + item.name + '.png');
+                    : ('https://koolshare.ngrok.wang' + new Array(3).join('/softcenter') + '/res/icon-' + item.name + '.png');
             });
             return result;
         };
@@ -505,6 +554,8 @@ function appUninstallModule(moduleInfo) {
                 .done(function (remoteData) {
                     //远端更新成功
                     syncRemoteSuccess = 1;
+                    softceterInitData(remoteData);
+
                     remoteData = remoteData.apps || [];
                     renderView(_mergeData(remoteData));
                     cb();
@@ -515,13 +566,20 @@ function appUninstallModule(moduleInfo) {
                     cb();
                 });
         }
+    notice_show();
     }
     //初始化整个界面展现，包括安装未安装的获取
     //当初始化过程获取软件列表失败时候，用本地的模块进行渲染
     //只要一次获取成功，以后不在重新获取，知道页面刷新重入
     $(function () {
     //梅林要求用这个函数来显示左测菜单
-    show_menu();
+    show_menu(menu_hook);
+
+    if(!db_softcenter_["softcenter_version"]) {
+        db_softcenter_["softcenter_version"] = "0.0";
+    }
+    $("#spnCurrVersion").html(db_softcenter_["softcenter_version"]);
+
         init(function () {
             toggleAppPanel(1);
         //一刷新界面是否就正在插件在安装.
@@ -547,13 +605,43 @@ function appUninstallModule(moduleInfo) {
         $('#IconContainer').on('click', '.uninstall-btn', function () {
             var name = $(this).data('name');
             console.log('uninstall', name);
+            appUninstallModule(softInfo[name]);
         });
         $('#IconContainer').on('click', '.update-btn', function () {
             var name = $(this).data('name');
             console.log('update', name);
+            appInstallModule(softInfo[name]);
+
         });
-    
+
     });
+var enable_ss = "<% nvram_get("enable_ss"); %>";
+var enable_soft = "<% nvram_get("enable_soft"); %>";
+function menu_hook(title, tab) {
+	tabtitle[tabtitle.length -1] = new Array("", "软件中心", "离线安装");
+	tablink[tablink.length -1] = new Array("", "Main_Soft_center.asp", "Main_Soft_setting.asp");
+}
+function notice_show(){
+    $.ajax({
+        url: 'https://koolshare.ngrok.wang/softcenter/push_message.json.js',
+        type: 'GET',
+        dataType: 'jsonp',
+        success: function(res) {
+			$("#push_titile").html(res.title);
+			$("#push_content1").html(res.content1);
+			$("#push_content2").html(res.content2);
+			if(res.content3){
+				document.getElementById("push_content3_li").style.display = "";
+				$("#push_content3").html(res.content3);
+			}
+			if(res.content4){
+				document.getElementById("push_content4_li").style.display = "";
+				$("#push_content4").html(res.content4);
+			}
+        }
+    });
+}
+    
 </script>
 </head>
 <body>
@@ -570,7 +658,7 @@ function appUninstallModule(moduleInfo) {
     <input type="hidden" name="first_time" value="">
     <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
     <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<table class="content" align="center" cellpadding="0" cellspacing="0">  
+<table class="content" align="center" cellpadding="0" cellspacing="0">
     <tr>
         <td width="17">&nbsp;</td>
         <td valign="top" width="202">
@@ -579,7 +667,7 @@ function appUninstallModule(moduleInfo) {
         </td>
         <td valign="top">
             <div id="tabMenu" class="submenuBlock"></div>
-                <table id="softcenter_td" width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
+                <table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
                     <tr>
                         <td align="left" valign="top">
                             <div>
@@ -601,17 +689,23 @@ function appUninstallModule(moduleInfo) {
                                                                         <td>
                                                                             <ul style="margin-top:-50px;padding-left:15px;" >
                                                                                 <li style="margin-top:-5px;">
-                                                                                    <h2>欢迎</h2>
+                                                                                    <h2 id="push_titile"><em>欢迎</em></h2>
                                                                                 </li>
                                                                                 <li style="margin-top:-5px;">
-                                                                                    欢迎来到插件中心，目前正在紧张开发中，各种插件酝酿中！
+                                                                                    <h4 id="push_content1" >欢迎来到插件中心，目前正在紧张开发中，各种插件酝酿中！</h4>
+                                                                                </li>
+                                                                                <li  style="margin-top:-5px;">
+                                                                                    <h4 id="push_content2">如果你想加入我们的工作，在 <a href="http://www.koolshare.cn" target="_blank"> <i><u>www.koolshare.cn</u></i> </a>联系我们！</h4>
+                                                                                </li>
+                                                                                <li id="push_content3_li" style="margin-top:-5px;display: none;">
+                                                                                    <h4 id="push_content3"></h4>
+                                                                                </li>
+                                                                                <li id="push_content4_li" style="margin-top:-5px;display: none;">
+                                                                                    <h4 id="push_content4"></h4>
                                                                                 </li>
                                                                                 <li style="margin-top:-5px;">
-                                                                                    如果你想加入我们的工作，在 <a href="http://www.koolshare.cn" target="_blank"> <i><u>www.koolshare.cn</u></i> </a>联系我们！
-                                                                                </li>
-                                                                                <li style="margin-top:-5px;">
-                                                                                    当前版本：<span id="spnCurrVersion"></span> 在线版本：<span id="spnOnlineVersion"></span>
-                                                                                    <input type="button" id="updateBtn" value="更新" style="display:none" />
+                                                                                    <h5>当前版本：<span id="spnCurrVersion"></span> 在线版本：<span id="spnOnlineVersion"></span>
+                                                                                    <input type="button" id="updateBtn" value="更新" style="display:none" /></h5>
                                                                                 </li>
                                                                             </ul>
                                                                         </td>
@@ -624,6 +718,17 @@ function appUninstallModule(moduleInfo) {
                                                         <td colspan="3"></td>
                                                     </tr>
 
+                                                    <tr bgcolor="#444f53" id="install_status" style="display: none;" width="235px">
+                                                        <td>
+                                                            <div style="padding:10px;width:95%;font-size:14px;" id="appInstallInfo">
+                                                            </div>
+                                                        </td>
+                                                        <td class="cloud_main_radius_right">
+                                                        </td>
+                                                     </tr>
+                                                    <tr height="10px">
+                                                        <td colspan="3"></td>
+                                                    </tr>
                                                     <tr width="235px">
                                                         <td colspan="4" cellpadding="0" cellspacing="0" style="padding:0">
                                                             <input class="show-install-btn" type="button" value="已安装"/>
@@ -636,33 +741,10 @@ function appUninstallModule(moduleInfo) {
                                                             <div style="text-align:center; line-height: 4em;">更新中...</div>
                                                         </td>
                                                     </tr>
+                                                    <tr height="10px">
+                                                        <td colspan="3"></td>
+                                                    </tr>
 
-                                                    <tr bgcolor="#444f53" width="235px">
-                                                            <td bgcolor="#444f53" class="cloud_main_radius_left" width="20%" height="50px">
-                                                                <div style="padding:10px;" align="left">
-                                                                    <li>摄像头挂载？</li>
-                                                                    <li>百度云？</li>
-                                                                    <li>Transmission？</li>
-                                                                    <li>Owncloud？</li>
-                                                                    <li>中文SSID?</li>
-                                                                    <li>校园网认证？</li>
-                                                                    
-                                                                    <li>....</li>
-                                                                </div>
-                                                            </td>
-                                                            <td width="6px">
-                                                                <div align="center"><img src="/images/cloudsync/line.png"></div>
-                                                            </td>
-                                                            <td width="1px">
-                                                            </td>
-                                                            <td>
-                                                                <div style="padding:10px;width:95%;font-size:14px;" id="appInstallInfo">
-                                                                    然而并没有...请随时关注固件更新哦~<i>（上古天坑区）</i>
-                                                                </div>
-                                                            </td>
-                                                            <td class="cloud_main_radius_right">
-                                                            </td>
-                                                        </tr>
                                                 </table>
                                             <div class="KoolshareBottom">论坛技术支持： <a href="http://www.koolshare.cn" target="_blank"> <i><u>www.koolshare.cn</u></i> </a>
                                                 <br/>博客技术支持： <a href="http://www.mjy211.com" target="_blank"> <i><u>www.mjy211.com</u></i> </a>

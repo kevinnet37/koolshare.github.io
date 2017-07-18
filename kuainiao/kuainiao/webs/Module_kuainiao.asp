@@ -24,6 +24,7 @@
 		<script type="text/javascript" src="/dbconf?p=kuainiao_&v=<% uptime(); %>"></script>
         <script type="text/javascript" src="/res/rsa.js"></script>
         <script type="text/javascript" src="/res/md5.js"></script>
+		<script type="text/javascript" src="/res/sha1.js"></script>
         <script type="text/javascript">
 		function init() {
 			show_menu();
@@ -36,6 +37,15 @@
 		        rrt.checked = true;
 		        document.getElementById('Kuainiao_detail_table').style.display = "";
 		    }
+			//双wan开始判断
+			var lb_mode = '<% nvram_get("wans_mode"); %>';
+			if(lb_mode !== "lb"){
+				document.getElementById('double_wan_set').style.display = "none";
+				document.getElementById('select_wan').style.display = "none";
+				document.form.kuainiao_config_wan.value = 0;
+			} else {
+				check_selected("kuainiao_config_wan", db_kuainiao_.kuainiao_config_wan);
+			}
 			//conf2obj();
 			//var conf_ajax = setInterval("conf2obj();", 60000);
 			version_show();
@@ -43,7 +53,12 @@
 			check_selected("kuainiao_start", db_kuainiao_.kuainiao_start);
 			check_selected("kuainiao_time", db_kuainiao_.kuainiao_time);
 		}
-        var kn = '00D6F1CFBF4D9F70710527E1B1911635460B1FF9AB7C202294D04A6F135A906E90E2398123C234340A3CEA0E5EFDCB4BCF7C613A5A52B96F59871D8AB9D240ABD4481CCFD758EC3F2FDD54A1D4D56BFFD5C4A95810A8CA25E87FDC752EFA047DF4710C7D67CA025A2DC3EA59B09A9F2E3A41D4A7EFBB31C738B35FFAAA5C6F4E6F';
+		//生成设备id
+		var wan_mac = '<% nvram_get("wan_hwaddr"); %>';
+		var fake_device_id = md5(wan_mac);
+		var device_sign = "div100."+fake_device_id+md5(hex_sha1(fake_device_id+"com.xunlei.vip.swjsq68700d1872b772946a6940e4b51827e8af"));
+
+        var kn = '00AC69F5CCC8BDE47CD3D371603748378C9CFAD2938A6B021E0E191013975AD683F5CBF9ADE8BD7D46B4D2EC2D78AF146F1DD2D50DC51446BB8880B8CE88D476694DFC60594393BEEFAA16F5DBCEBE22F89D640F5336E42F587DC4AFEDEFEAC36CF007009CCCE5C1ACB4FF06FBA69802A8085C2C54BADD0597FC83E6870F1E36FD';
         var ke = '010001';
 
         var rsa = new RSAKey();
@@ -56,6 +71,7 @@
 			var pwd = $("#kuainiao_config_old_pwd").val();
 			var encrypted_pwd = rsa.encrypt(md5(pwd));
 			$("#kuainiao_config_pwd").val(encrypted_pwd.toUpperCase());
+			$("#kuainiao_device_sign").val(device_sign);
 			//防止变为更新操作
 			$("#kuainiao_update_check").val(0);
 			showLoading(9);
@@ -141,28 +157,6 @@
 				url: "dbconf?p=kuainiao_",
 				dataType: "script",
 				success: function() {
-					if (db_kuainiao_['kuainiao_install_status'] == "1"){
-						$("#kuainiao_install_show").html("<i>正在下载更新...</i>");
-					} else if (db_kuainiao_['kuainiao_install_status'] == "2"){
-						$("#kuainiao_install_show").html("<i>正在安装更新...</i>");
-					} else if (db_kuainiao_['kuainiao_install_status'] == "3"){
-						$("#kuainiao_install_show").html("<i>安装更新成功，5秒后刷新本页!</i>");
-						version_show();
-						refreshpage(3);
-					} else if (db_kuainiao_['kuainiao_install_status'] == "4"){
-					   document.getElementById('updateBtn').style.display = "";
-						$("#kuainiao_install_show").html("<i>下载文件校验不一致！</i>");
-					} else if (db_kuainiao_['kuainiao_install_status'] == "5"){
-						document.getElementById('updateBtn').style.display = "";
-						$("#kuainiao_install_show").html("<i>然而并没有更新！</i>");
-					} else if (db_kuainiao_['kuainiao_install_status'] == "6"){
-			      		$("#kuainiao_install_show").html("<i>正在检查是否有更新~</i>");
-					} else if (db_kuainiao_['kuainiao_install_status'] == "7"){
-					   document.getElementById('updateBtn').style.display = "";
-						$("#kuainiao_install_show").html("<i>检测更新错误！</i>");
-					} else {
-						$("#kuainiao_install_show").html("");
-					}
 					//尝试合并函数
 					var p = "kuainiao_";
 					var params = ["warning","can_upgrade", "run_status", "run_warnning"];
@@ -176,27 +170,28 @@
 					//check_selected("kuainiao_time", db_kuainiao_.kuainiao_time);
 					check_downstream(parseInt(db_kuainiao_.kuainiao_config_downstream), parseInt(db_kuainiao_.kuainiao_config_max_downstream), db_kuainiao_.kuainiao_run_status);
 
-					setTimeout("write_kuainiao_install_status()", 2000);
+					setTimeout("write_kuainiao_install_status()", 10000);
 				}
 			});
 		}
 
 		function version_show(){
-			if (db_kuainiao_['kuainiao_version'] != db_kuainiao_['kuainiao_version_web'] && db_kuainiao_['kuainiao_version_web'] !== undefined){
-				$("#kuainiao_version_status").html("<i>有新版本：" + db_kuainiao_['kuainiao_version_web']);
-			} else {
-				if (db_kuainiao_['kuainiao_version'] == undefined) {
-					$("#kuainiao_version_status").html("<i>当前版本：");
-				} else {
-					$("#kuainiao_version_status").html("<i>当前版本：" + db_kuainiao_['kuainiao_version']);
+			$("#kuainiao_version_status").html("<i>当前版本：" + db_kuainiao_['kuainiao_version']);
+		    $.ajax({
+		        url: 'https://raw.githubusercontent.com/koolshare/koolshare.github.io/acelan_softcenter_ui/kuainiao/config.json.js',
+		        type: 'GET',
+		        success: function(res) {
+		            var txt = $(res.responseText).text();
+		            if(typeof(txt) != "undefined" && txt.length > 0) {
+		                //console.log(txt);
+		                var obj = $.parseJSON(txt.replace("'", "\""));
+				$("#kuainiao_version_status").html("<i>当前版本：" + obj.version);
+				if(obj.version != db_adm_["adm_version"]) {
+					$("#kuainiao_version_status").html("<i>有新版本：" + obj.version);
 				}
-			}
-		}
-		function update_kuainiao(o, s){
-			document.form.kuainiao_update_check.value = 1;
-			document.getElementById('updateBtn').style.display = "none";
-			document.form.action_mode.value = s;
-			document.form.submit();
+		            }
+		        }
+		    });
 		}
 
 		function done_validating(action) {
@@ -222,7 +217,7 @@
 			<input type="hidden" name="action_wait" value="5"/>
 			<input type="hidden" name="first_time" value=""/>
 			<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>"/>
-			<input type="hidden" name="SystemCmd" onkeydown="onSubmitCtrl(this, ' Refresh ')" value="config-kuainiao.sh"/>
+			<input type="hidden" name="SystemCmd" onkeydown="onSubmitCtrl(this, ' Refresh ')" value="kuainiao_config.sh"/>
 			<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>"/>
 			<input type="hidden" id="kuainiao_config_pwd" name="kuainiao_config_pwd" value='<% dbus_get_def("kuainiao_config_pwd", ""); %>'/>
 			<input type="hidden" id="kuainiao_warning" name="kuainiao_warning" value='<% dbus_get_def("kuainiao_warning", ""); %>'/>
@@ -230,8 +225,7 @@
 			<input type="hidden" id="kuainiao_can_upgrade" name="kuainiao_can_upgrade" value='<% dbus_get_def("kuainiao_can_upgrade", "0"); %>'/>
 			<input type="hidden" id="kuainiao_run_status" name="kuainiao_run_status" value='<% dbus_get_def("kuainiao_run_status", "0"); %>'/>
 			<input type="hidden" id="kuainiao_run_warnning" name="kuainiao_run_warnning" value='<% dbus_get_def("kuainiao_run_warnning", ""); %>'/>
-			<input type="hidden" id="kuainiao_install_status" name="kuainiao_install_status" value="0" />
-			<input type="hidden" id="kuainiao_update_check" name="kuainiao_update_check" value="0" />
+			<input type="hidden" id="kuainiao_device_sign" name="kuainiao_device_sign" value='<% dbus_get_def("kuainiao_device_sign", ""); %>'/>
 
 			<table class="content" align="center" cellpadding="0" cellspacing="0">
 				<tr>
@@ -253,7 +247,6 @@
 												<div style="float:right; width:15px; height:25px;margin-top:10px"><img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img></div>
 												<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 												<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc">迅雷快鸟加速服务，带宽平均提升5倍，最高可达100M</div>
-												<div id="kuainiao_version_status" style="padding-top:5px;margin-left:30px;margin-top:0px;float: left;"><i>当前版本：<% dbus_get_def("kuainiao_version", "0"); %></i></div>
 												<div class="formfontdesc" id="cmdDesc"></div>
 												<table style="margin:10px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="routing_table">
 													<thead>
@@ -264,7 +257,7 @@
 													<tr>
 													<th>开启快鸟加速</th>
 														<td colspan="2">
-															<div class="switch_field" style="display:table-cell">
+															<div class="switch_field" style="display:table-cell;float: left;">
 																<label for="switch">
 																	<input id="switch" class="switch" type="checkbox" style="display: none;">
 																	<div class="switch_container" >
@@ -275,10 +268,9 @@
 																	</div>
 																</label>
 															</div>
-															<div id="update_button" style="padding-top:5px;margin-left:100px;margin-top:-35px;float: left;">
-																<button id="updateBtn" class="button_gen" onclick="update_kuainiao(this, ' Refresh ');">检查更新</button>
+															<div id="kuainiao_version_status" style="padding-top:5px;margin-left:230px;margin-top:0px;">
+																<i>当前版本：<% dbus_get_def("kuainiao_version", "未知"); %></i>
 															</div>
-															<div id="kuainiao_install_show" style="padding-top:5px;margin-left:80px;margin-top:-30px;float: left;"></div>
 													</td>
 													</tr>
 		                                    	</table>
@@ -352,6 +344,20 @@
 														</td>
 													</tr>
 
+													<thead id="double_wan_set">
+													<tr>
+														<td colspan="4">双WAN设置</td>
+													</tr>
+													</thead>
+													<tr id="select_wan">
+													    <th width="35%">加速WAN口</th>
+														<td>
+															<select id="kuainiao_config_wan" name="kuainiao_config_wan" class="input_option"  >
+																<option value="1">WAN1</option>
+																<option value="2">WAN2</option>
+															</select>
+														</td>
+													</tr>
 
 		 										</table>
 		 										<div id="warn" style="display: none;margin-top: 20px;text-align: center;font-size: 20px;margin-bottom: 20px;"class="formfontdesc" ></div>
